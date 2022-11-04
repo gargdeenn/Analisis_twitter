@@ -1,68 +1,76 @@
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
-from components.insecurity_component import graph_map
+from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
+from Conn.conn import conn
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
 app = Dash(__name__)
 
-app.layout = html.Div(style={},children=[
-    dcc.Tabs(id="tabs-with-props", value='tab-1', style={'color':'white'},children=[
-        dcc.Tab(label='Inseguridad', value='tab-1'),
-        dcc.Tab(label='Corrupción', value='tab-2'),
-        dcc.Tab(label='Educación', value='tab-3'),
-    ], colors={
-        "border": "white",
-        "primary": "#2d2d2d",
-        "background": "#2d2d2d"
-    }),
-    html.Div(id='tabs-content-props-4'),
-    dcc.Dropdown(
-                    id='year_selected',
-                    options=[
-                        {"label":"joly", "value":"joly"},
-                        {"label":"Coderre", "value":"Coderre"},
-                        {"label":"Bergeron", "value":"Bergeron"},
-                    ],
-                    multi=False,value=2018,
-                ),
-            html.Div(id='output_container', children=[]),
-            html.Br(),
+conexion = conn()
+tweets = conexion.get_tweets()
+cities = conexion.get_cities()
+tweetsTemas = []
+ciudades = []
+union = []
 
-            dcc.Graph(id='my_map', figure={})
+app.layout = html.Div([
+    dcc.Dropdown(['inseguridad', 'corrupción', 'educación'], value='inseguridad',id='demo-dropdown'),
+    
+    html.Div(style={'display':'flex'}, children=[
+            dcc.Graph(id='graph_bar', figure={}),
+            dcc.Graph(
+                id='graph_pie',
+                figure={},
+                style={'width':'600px','height':'450px'},
+            )
+
+    ]),
+
 ])
 
-@app.callback(Output('tabs-content-props-4', 'children'),
-              Input('tabs-with-props', 'value'))
-def render_content(tab):
-    if tab == 'tab-1':
-        return html.Div([
+@app.callback(
+    Output('graph_bar', 'figure'),
+    [Input('demo-dropdown', 'value')]
+)
 
-        ])
-    elif tab == 'tab-2':
-        return html.Div([
-            html.H3('Tab content 2')
-        ])
-    elif tab == 'tab-3':
-        return html.Div([
-            html.H3('Tab content 3')
-        ])
+def graph_bar_output(value):
+    tweetsTemas.clear()
+    ciudades.clear()
+    for city in range(len(cities)):
+        contador: int = 0
+        for i in range(len(tweets)):
+            if tweets[i][5] in cities[city][0]:
+                if tweets[i][4] in value:
+                            contador = contador + 1
+        tweetsTemas.append(contador)
+        ciudades.append(cities[city][1])
+    union = (tweetsTemas, ciudades)
+    fig = ff.create_table(union, height_constant=10)
+    trace1 = go.Bar(x=ciudades, y=tweetsTemas, xaxis='x2', yaxis='y2',
+                marker=dict(color='#9CCC65'),
+                name=f'{value}')
+    fig.add_traces([trace1])
+    fig['layout']['xaxis2'] = {}
+    fig['layout']['yaxis2'] = {}
+    fig.layout.yaxis.update({'domain': [0, .45]})
+    fig.layout.yaxis2.update({'domain': [.6, 1]})
+# The graph's yaxis2 MUST BE anchored to the graph's xaxis2 and vice versa
+    fig.layout.yaxis2.update({'anchor': 'x2'})
+    fig.layout.xaxis2.update({'anchor': 'y2'})
+    fig.layout.yaxis2.update({'title': 'Numero de tweets'})
+# Update the margins to add a title and see graph x-labels.
+    fig.layout.margin.update({'t':75, 'l':50})
+    fig.layout.update({'title': f'{value} en las ciudades principales del país'})
+    fig.layout.update({'height':800})
+    return fig
 
 @app.callback(
-    [Output(component_id='output_container', component_property='children'),
-    Output(component_id='my_map', component_property='figure')],
-    [Input(component_id='year_selected', component_property='value')]
-    )
+    Output('graph_pie', 'figure'),
+    [Input('demo-dropdown', 'value')]
+)
 
-def graph_map(year_selected):
-    df = px.data.election() # replace with your own data source
-    geojson = px.data.election_geojson()
-    fig = px.choropleth(
-            df, geojson=geojson, color=candidate,
-            locations="district", featureidkey="properties.district",
-            projection="mercator", range_color=[0, 6500]
-        )
-    fig.update_geos(fitbounds="locations", visible=False)
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    return fig
+def graph_pie_output(value):
+    fig_pie = go.Figure(data=[go.Pie(labels=ciudades, values=tweetsTemas)])
+    return fig_pie
 
 if __name__ == '__main__':
     app.run_server(debug=True)
