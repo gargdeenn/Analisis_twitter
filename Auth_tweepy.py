@@ -19,17 +19,17 @@
 # Tweets=[]
 
 # try:
-#     for tweet in tweepy.Cursor(api.search_tweets, f"corrupción",geocode="10.46264,-73.26144,15mi").items(135):
+#     for tweet in tweepy.Cursor(api.search_tweets, f"inseguridad",geocode="10.46264,-73.26144,15mi").items(60):
 #         fecha = tweet.created_at
 #         print(f'Usuario: {tweet.user.screen_name} - Tweet: {tweet.text} - Fecha creación: {tweet.created_at} - Ubicación: {tweet.user.location}')
 #         i=i+1
-#         Tweet= tuit(fecha.day,fecha.month,fecha.year,'corrupción','1')
+#         Tweet= tuit(fecha.day,fecha.month,fecha.year,'inseguridad','1')
 #         Tweets.append(Tweet)
 #     conexion.post_Tweets(Tweets)
 # except Exception as e:
 #     print(e)
 # try:
-#     for tweet in tweepy.Cursor(api.search_tweets, f"corrupción",geocode="10.85593,-74.83383,15mi").items(402):
+#     for tweet in tweepy.Cursor(api.search_tweets, f"inseguridad",geocode="10.85593,-74.83383,15mi").items(402):
 #         fecha = tweet.created_at
 #         print(f'Usuario: {tweet.user.screen_name} - Tweet: {tweet.text} - Fecha creación: {tweet.created_at} - Ubicación: {tweet.user.location}')
 #         i=i+1
